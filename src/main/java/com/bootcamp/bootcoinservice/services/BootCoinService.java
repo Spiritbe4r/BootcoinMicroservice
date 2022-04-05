@@ -13,4 +13,6 @@ public interface BootCoinService extends CrudService<BootCoin, String> {
 
   Mono<BootCoin> buyBootCoin(BootCoin bootCoin);
 
+  Mono<BootCoin> findByBootcoinById(String id);
+
 }

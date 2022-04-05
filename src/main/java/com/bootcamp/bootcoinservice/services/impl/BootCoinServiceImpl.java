@@ -7,6 +7,9 @@ import com.bootcamp.bootcoinservice.services.BootCoinService;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.ReactiveRedisOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -19,17 +22,44 @@ public class BootCoinServiceImpl implements BootCoinService {
 
   private static final Logger log = LoggerFactory.getLogger(BootCoinServiceImpl.class);
 
+  private final RedisTemplate redisTemplate;
 
+  private final ReactiveRedisOperations<String, BootCoin> operations;
 
   private final YankiDTOServiceImpl service;
 
   private final BootCoinRepo repository;
 
   @Override
-  public Mono<BootCoin> buyBootCoin(BootCoin bootCoin) {
-    return null;
-  }
+  public Mono<BootCoin> findByBootcoinById(String id) {
 
+    // Obtener información el bootcoin del caché
+    String key = "bootcoin_" + id;
+    ValueOperations<String, BootCoin> operations = redisTemplate.opsForValue();
+
+    // existe caché
+    boolean hasKey = redisTemplate.hasKey(key);
+    if (hasKey) {
+      BootCoin bootCoin = operations.get(key);
+
+      log.info("BootCoinServiceImpl.findByBootcoinById : obtuvo el bootcoin del caché  >> " + bootCoin.toString());
+      return Mono.create(bootcoinMonoSink -> bootcoinMonoSink.success(bootCoin));
+    }
+
+    // Obtener información del tipo de bootcoin de MongoDB
+    Mono<BootCoin> bootcoinMono = repository.findById(id);
+
+    if (bootcoinMono == null)
+      return bootcoinMono;
+
+    // insertar búfer
+    bootcoinMono.subscribe(bootcoinObj -> {
+      operations.set(key, bootcoinObj);
+      log.info("CityHandler.findCityById() : clientType insertar caché >> " + bootcoinObj.toString());
+    });
+
+    return bootcoinMono;
+  }
 
 
   @Override
@@ -67,7 +97,7 @@ public class BootCoinServiceImpl implements BootCoinService {
   @Override
   public Mono<BootCoin> create(BootCoin obj) {
 
-      return repository.save(obj);
+    return repository.save(obj);
 
   }
 
@@ -91,7 +121,12 @@ public class BootCoinServiceImpl implements BootCoinService {
     return repository.delete(obj);
   }
 
-  public Boolean validateBootcoin(BootCoin obj){
-      return true;
+  public Boolean validateBootcoin(BootCoin obj) {
+    return true;
+  }
+
+  @Override
+  public Mono<BootCoin> buyBootCoin(BootCoin bootCoin) {
+    return null;
   }
 }

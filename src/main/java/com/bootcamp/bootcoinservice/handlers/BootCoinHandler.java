@@ -107,7 +107,7 @@ public class BootCoinHandler {
   public Mono<ServerResponse> findById(ServerRequest request) {
     String bootCoinNumber = request.pathVariable("id");
     return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
-          .body(bootCoinServices.findById(bootCoinNumber), BootCoin.class);
+          .body(bootCoinServices.findByBootcoinById(bootCoinNumber), BootCoin.class);
   }
 
   public Mono<ServerResponse> findByPhoneNumber(ServerRequest request) {
