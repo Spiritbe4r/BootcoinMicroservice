@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: bootcoin-microservice
+
+  config:
+    import: optional:configserver:http://localhost:8888
+  profiles:
+    active: dev
+
+microservices-urls:
+  api-yanki: http://localhost:8095/api/yanki-account
+
+  api-bootcoin-transac: http://localhost:8095/api/bootcoin-transaction
+
+
+
+
